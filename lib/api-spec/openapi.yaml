@@ -1,22 +1,27 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Personal Finance API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
-    description: Health operations
+  - name: profile
+  - name: transactions
+  - name: budgets
+  - name: goals
+  - name: dashboard
+  - name: ai
+  - name: notifications
+  - name: reports
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +29,520 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /me:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get current user profile
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+    patch:
+      operationId: updateProfile
+      tags: [profile]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+  /transactions:
+    get:
+      operationId: listTransactions
+      tags: [transactions]
+      parameters:
+        - in: query
+          name: category
+          schema: { type: string }
+        - in: query
+          name: type
+          schema: { type: string }
+        - in: query
+          name: search
+          schema: { type: string }
+        - in: query
+          name: startDate
+          schema: { type: string, format: date }
+        - in: query
+          name: endDate
+          schema: { type: string, format: date }
+        - in: query
+          name: limit
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Transaction"
+    post:
+      operationId: createTransaction
+      tags: [transactions]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTransactionBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+  /transactions/{id}:
+    patch:
+      operationId: updateTransaction
+      tags: [transactions]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTransactionBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Transaction"
+    delete:
+      operationId: deleteTransaction
+      tags: [transactions]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+  /transactions/categorize:
+    post:
+      operationId: categorizeTransaction
+      tags: [transactions, ai]
+      summary: AI auto-categorize a description
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CategorizeBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CategorizeResponse"
+  /budgets:
+    get:
+      operationId: listBudgets
+      tags: [budgets]
+      parameters:
+        - in: query
+          name: month
+          schema: { type: string }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Budget"
+    post:
+      operationId: upsertBudget
+      tags: [budgets]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpsertBudgetBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Budget"
+  /budgets/{id}:
+    delete:
+      operationId: deleteBudget
+      tags: [budgets]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+  /goals:
+    get:
+      operationId: listGoals
+      tags: [goals]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Goal"
+    post:
+      operationId: createGoal
+      tags: [goals]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateGoalBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+  /goals/{id}:
+    patch:
+      operationId: updateGoal
+      tags: [goals]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateGoalBody"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Goal"
+    delete:
+      operationId: deleteGoal
+      tags: [goals]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "204":
+          description: Deleted
+  /dashboard/summary:
+    get:
+      operationId: getDashboardSummary
+      tags: [dashboard]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardSummary"
+  /reports/monthly:
+    get:
+      operationId: getMonthlyReport
+      tags: [reports]
+      parameters:
+        - in: query
+          name: months
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MonthlyReport"
+  /reports/weekly:
+    get:
+      operationId: getWeeklyReport
+      tags: [reports]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WeeklyReport"
+  /ai/insights:
+    get:
+      operationId: getAiInsights
+      tags: [ai]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiInsights"
+    post:
+      operationId: refreshAiInsights
+      tags: [ai]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiInsights"
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Notification"
+  /notifications/{id}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
 components:
   schemas:
     HealthStatus:
       type: object
       properties:
-        status:
-          type: string
-      required:
-        - status
-
+        status: { type: string }
+      required: [status]
+    Profile:
+      type: object
+      properties:
+        userId: { type: string }
+        displayName: { type: ["string", "null"] }
+        currency: { type: string }
+        monthlyIncome: { type: integer }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [userId, currency, monthlyIncome, createdAt, updatedAt]
+    UpdateProfileBody:
+      type: object
+      properties:
+        displayName: { type: ["string", "null"] }
+        currency: { type: string }
+        monthlyIncome: { type: integer }
+    Transaction:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        amount: { type: integer, description: "amount in cents" }
+        type: { type: string, enum: [income, expense] }
+        category: { type: string }
+        description: { type: string }
+        date: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+      required: [id, userId, amount, type, category, description, date, createdAt]
+    CreateTransactionBody:
+      type: object
+      properties:
+        amount: { type: integer }
+        type: { type: string, enum: [income, expense] }
+        category: { type: string }
+        description: { type: string }
+        date: { type: string, format: date-time }
+      required: [amount, type, category]
+    UpdateTransactionBody:
+      type: object
+      properties:
+        amount: { type: integer }
+        type: { type: string, enum: [income, expense] }
+        category: { type: string }
+        description: { type: string }
+        date: { type: string, format: date-time }
+    CategorizeBody:
+      type: object
+      properties:
+        description: { type: string }
+      required: [description]
+    CategorizeResponse:
+      type: object
+      properties:
+        category: { type: string }
+      required: [category]
+    Budget:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        category: { type: string }
+        amount: { type: integer }
+        month: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, userId, category, amount, month, createdAt, updatedAt]
+    UpsertBudgetBody:
+      type: object
+      properties:
+        category: { type: string }
+        amount: { type: integer }
+        month: { type: string }
+      required: [category, amount, month]
+    Goal:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        name: { type: string }
+        targetAmount: { type: integer }
+        currentAmount: { type: integer }
+        deadline: { type: ["string", "null"], format: date-time }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+      required: [id, userId, name, targetAmount, currentAmount, createdAt, updatedAt]
+    CreateGoalBody:
+      type: object
+      properties:
+        name: { type: string }
+        targetAmount: { type: integer }
+        currentAmount: { type: integer }
+        deadline: { type: ["string", "null"], format: date-time }
+      required: [name, targetAmount]
+    UpdateGoalBody:
+      type: object
+      properties:
+        name: { type: string }
+        targetAmount: { type: integer }
+        currentAmount: { type: integer }
+        deadline: { type: ["string", "null"], format: date-time }
+    CategoryBreakdownItem:
+      type: object
+      properties:
+        category: { type: string }
+        amount: { type: integer }
+      required: [category, amount]
+    MonthlySpendItem:
+      type: object
+      properties:
+        month: { type: string }
+        income: { type: integer }
+        expense: { type: integer }
+      required: [month, income, expense]
+    BudgetProgressItem:
+      type: object
+      properties:
+        category: { type: string }
+        budget: { type: integer }
+        spent: { type: integer }
+      required: [category, budget, spent]
+    DashboardSummary:
+      type: object
+      properties:
+        balance: { type: integer }
+        totalIncome: { type: integer }
+        totalExpense: { type: integer }
+        savings: { type: integer }
+        monthIncome: { type: integer }
+        monthExpense: { type: integer }
+        currency: { type: string }
+        recentTransactions:
+          type: array
+          items: { $ref: "#/components/schemas/Transaction" }
+        categoryBreakdown:
+          type: array
+          items: { $ref: "#/components/schemas/CategoryBreakdownItem" }
+        monthlySpend:
+          type: array
+          items: { $ref: "#/components/schemas/MonthlySpendItem" }
+        budgetProgress:
+          type: array
+          items: { $ref: "#/components/schemas/BudgetProgressItem" }
+      required: [balance, totalIncome, totalExpense, savings, monthIncome, monthExpense, currency, recentTransactions, categoryBreakdown, monthlySpend, budgetProgress]
+    MonthlyReport:
+      type: object
+      properties:
+        monthlySpend:
+          type: array
+          items: { $ref: "#/components/schemas/MonthlySpendItem" }
+        categoryBreakdown:
+          type: array
+          items: { $ref: "#/components/schemas/CategoryBreakdownItem" }
+      required: [monthlySpend, categoryBreakdown]
+    WeeklyDayItem:
+      type: object
+      properties:
+        day: { type: string }
+        amount: { type: integer }
+      required: [day, amount]
+    WeeklyReport:
+      type: object
+      properties:
+        days:
+          type: array
+          items: { $ref: "#/components/schemas/WeeklyDayItem" }
+        totalSpent: { type: integer }
+      required: [days, totalSpent]
+    AiInsights:
+      type: object
+      properties:
+        summary: { type: string }
+        suggestions:
+          type: array
+          items: { type: string }
+        predictedNextMonth: { type: ["string", "null"] }
+        createdAt: { type: ["string", "null"], format: date-time }
+        hasEnoughData: { type: boolean }
+      required: [summary, suggestions, hasEnoughData]
+    Notification:
+      type: object
+      properties:
+        id: { type: integer }
+        userId: { type: string }
+        title: { type: string }
+        message: { type: string }
+        type: { type: string }
+        read: { type: boolean }
+        createdAt: { type: string, format: date-time }
+      required: [id, userId, title, message, type, read, createdAt]

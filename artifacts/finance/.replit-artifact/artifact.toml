@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Finova - AI Personal Finance"
+version = "1.0.0"
+id = "artifacts/finance"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 19072
+
+[services.development]
+run = "pnpm --filter @workspace/finance run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/finance", "run", "build" ]
+publicDir = "artifacts/finance/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "19072"
+BASE_PATH = "/"
