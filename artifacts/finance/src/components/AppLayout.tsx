@@ -14,23 +14,22 @@ import {
   Moon,
   Menu,
   X,
-  Wallet,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useTheme } from "@/lib/theme";
 import { useListNotifications } from "@workspace/api-client-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
-  { href: "/budgets", label: "Budgets", icon: PiggyBank },
-  { href: "/goals", label: "Goals", icon: Target },
-  { href: "/insights", label: "AI Insights", icon: Sparkles },
-  { href: "/reports", label: "Reports", icon: BarChart3 },
+  { href: "/",              label: "Dashboard",     icon: LayoutDashboard },
+  { href: "/transactions",  label: "Transactions",  icon: ArrowLeftRight },
+  { href: "/budgets",       label: "Budgets",       icon: PiggyBank },
+  { href: "/goals",         label: "Goals",         icon: Target },
+  { href: "/insights",      label: "AI Insights",   icon: Sparkles },
+  { href: "/reports",       label: "Reports",       icon: BarChart3 },
   { href: "/notifications", label: "Notifications", icon: Bell },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings",      label: "Settings",      icon: Settings },
 ];
 
 export function AppLayout({ children }: { children: ReactNode }) {
@@ -42,27 +41,45 @@ export function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-background text-foreground">
-      <aside
-        className={cn(
-          "fixed inset-y-0 left-0 z-40 w-64 bg-sidebar border-r border-sidebar-border flex flex-col transition-transform md:translate-x-0 md:static",
-          mobileOpen ? "translate-x-0" : "-translate-x-full",
-        )}
-      >
-        <div className="flex items-center gap-2 px-6 h-16 border-b border-sidebar-border">
-          <div className="size-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground">
-            <Wallet className="size-5" />
+
+      {/* ── Sidebar ───────────────────────────────── */}
+      <aside className={cn(
+        "fixed inset-y-0 left-0 z-40 w-64 flex flex-col",
+        "sidebar-gradient border-r border-sidebar-border",
+        "transition-transform duration-300 md:translate-x-0 md:static",
+        mobileOpen ? "translate-x-0" : "-translate-x-full",
+      )}>
+
+        {/* Logo */}
+        <div className="flex items-center gap-3 px-5 h-16 border-b border-sidebar-border/60">
+          <div className="size-9 rounded-xl bg-primary flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/40">
+            <TrendingUp className="size-4" />
           </div>
           <div>
-            <div className="font-semibold tracking-tight">Finova</div>
-            <div className="text-[11px] text-muted-foreground -mt-0.5">AI Personal Finance</div>
+            <div className="font-bold text-white text-[15px] tracking-tight">Finova</div>
+            <div className="text-[10px] text-sidebar-muted uppercase tracking-[0.15em]">AI Finance</div>
           </div>
-          <button className="ml-auto md:hidden p-2" onClick={() => setMobileOpen(false)} aria-label="Close menu">
-            <X className="size-5" />
+          <button
+            className="ml-auto md:hidden p-1.5 rounded-lg text-sidebar-muted hover:text-white transition-colors"
+            onClick={() => setMobileOpen(false)}
+          >
+            <X className="size-4" />
           </button>
         </div>
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+
+        {/* Section label */}
+        <div className="px-5 pt-6 pb-2">
+          <span className="text-[10px] uppercase tracking-[0.12em] font-semibold text-sidebar-muted">
+            Navigation
+          </span>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto scrollbar-thin">
           {NAV.map((item) => {
-            const active = item.href === "/" ? location === "/" : location.startsWith(item.href);
+            const active = item.href === "/"
+              ? location === "/"
+              : location.startsWith(item.href);
             const Icon = item.icon;
             return (
               <Link
@@ -70,52 +87,105 @@ export function AppLayout({ children }: { children: ReactNode }) {
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  "group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150",
                   active
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/60",
+                    ? "bg-sidebar-accent text-white"
+                    : "text-sidebar-foreground hover:bg-white/5 hover:text-white",
                 )}
               >
-                <Icon className="size-4" />
+                <Icon className={cn(
+                  "size-4 shrink-0 transition-colors",
+                  active
+                    ? "text-primary"
+                    : "text-sidebar-muted group-hover:text-primary",
+                )} />
                 <span className="flex-1">{item.label}</span>
                 {item.href === "/notifications" && unread > 0 && (
-                  <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
-                    {unread}
-                  </Badge>
+                  <span className="size-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+                    {unread > 9 ? "9+" : unread}
+                  </span>
+                )}
+                {active && (
+                  <span className="size-1.5 rounded-full bg-primary shrink-0" />
                 )}
               </Link>
             );
           })}
         </nav>
-        <div className="px-4 py-4 border-t border-sidebar-border text-xs text-muted-foreground">
-          v1.0 · Built for clarity
+
+        {/* AI badge */}
+        <div className="mx-4 mb-4 rounded-xl border border-primary/20 bg-primary/10 p-3">
+          <div className="flex items-center gap-2.5">
+            <div className="size-7 rounded-lg bg-primary/20 flex items-center justify-center shrink-0">
+              <Sparkles className="size-3.5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-[11px] text-white font-semibold">AI-Powered</div>
+              <div className="text-[10px] text-sidebar-muted truncate">Smart insights active</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="px-5 pb-4 text-[10px] text-sidebar-muted/60">
+          © {new Date().getFullYear()} Finova
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b border-border flex items-center px-4 md:px-8 gap-3 bg-background/80 backdrop-blur sticky top-0 z-30">
-          <button className="md:hidden p-2" onClick={() => setMobileOpen(true)} aria-label="Open menu">
+      {/* ── Main ──────────────────────────────────── */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        {/* Topbar */}
+        <header className="h-16 border-b border-border flex items-center px-4 md:px-6 gap-3 bg-background/80 backdrop-blur-md sticky top-0 z-30">
+          <button
+            className="md:hidden p-2 rounded-xl hover:bg-muted transition-colors"
+            onClick={() => setMobileOpen(true)}
+          >
             <Menu className="size-5" />
           </button>
+
           <div className="flex-1" />
-          <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
-            {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+
+          {/* Theme toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggle}
+            className="rounded-xl size-9"
+            aria-label="Toggle theme"
+          >
+            {theme === "dark"
+              ? <Sun className="size-4 text-amber-400" />
+              : <Moon className="size-4 text-slate-500" />
+            }
           </Button>
+
+          {/* Notifications */}
           <Link href="/notifications">
-            <Button variant="ghost" size="icon" aria-label="Notifications" className="relative">
+            <Button variant="ghost" size="icon" className="rounded-xl size-9 relative">
               <Bell className="size-4" />
               {unread > 0 && (
-                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive" />
+                <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive ring-2 ring-background" />
               )}
             </Button>
           </Link>
-          <UserButton />
+
+          <div className="pl-0.5">
+            <UserButton />
+          </div>
         </header>
-        <main className="flex-1 p-4 md:p-8 max-w-[1400px] w-full mx-auto">{children}</main>
+
+        {/* Page content */}
+        <main className="flex-1 p-4 md:p-6 lg:p-8 max-w-[1440px] w-full mx-auto overflow-auto">
+          {children}
+        </main>
       </div>
 
+      {/* Mobile backdrop */}
       {mobileOpen && (
-        <div className="fixed inset-0 bg-black/40 z-30 md:hidden" onClick={() => setMobileOpen(false)} />
+        <div
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
       )}
     </div>
   );

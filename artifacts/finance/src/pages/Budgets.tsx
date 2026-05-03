@@ -8,7 +8,6 @@ import {
   useGetDashboardSummary,
   useGetProfile,
 } from "@workspace/api-client-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,9 +22,11 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/PageHeader";
 import { EmptyState } from "@/components/EmptyState";
 import { formatMoney, formatMonthLabel, currentMonth, parseMoneyToCents } from "@/lib/format";
 import { EXPENSE_CATEGORIES, categoryMeta } from "@/lib/categories";
+import { cn } from "@/lib/utils";
 
 export default function Budgets() {
   const qc = useQueryClient();
@@ -60,10 +61,7 @@ export default function Budgets() {
 
   async function submit() {
     const cents = parseMoneyToCents(amount);
-    if (cents <= 0) {
-      toast({ title: "Enter a valid amount", variant: "destructive" });
-      return;
-    }
+    if (cents <= 0) { toast({ title: "Enter a valid amount", variant: "destructive" }); return; }
     try {
       await upsert.mutateAsync({ data: { category, amount: cents, month } });
       toast({ title: "Budget saved" });
@@ -88,67 +86,65 @@ export default function Budgets() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Budgets</h1>
-          <p className="text-sm text-muted-foreground mt-1">Set monthly limits and stay on track.</p>
-        </div>
-        <div className="flex gap-2">
-          <Select value={month} onValueChange={setMonth}>
-            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              {monthOptions.map((m) => (
-                <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="size-4" /> Set budget</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Set monthly budget</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label>Category</Label>
-                  <Select value={category} onValueChange={setCategory}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {EXPENSE_CATEGORIES.map((c) => (
-                        <SelectItem key={c} value={c}>{c}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+    <div>
+      <PageHeader
+        title="Budgets"
+        subtitle="Set monthly limits and stay on track."
+        action={
+          <div className="flex gap-2 flex-wrap">
+            <Select value={month} onValueChange={setMonth}>
+              <SelectTrigger className="w-[160px] rounded-xl bg-card">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {monthOptions.map((m) => (
+                  <SelectItem key={m} value={m}>{formatMonthLabel(m)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
+                <Button className="shadow-md shadow-primary/20"><Plus className="size-4" /> Set budget</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-sm">
+                <DialogHeader><DialogTitle>Set monthly budget</DialogTitle></DialogHeader>
+                <div className="space-y-4 pt-1">
+                  <div className="space-y-1.5">
+                    <Label>Category</Label>
+                    <Select value={category} onValueChange={setCategory}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {EXPENSE_CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Monthly limit</Label>
+                    <Input inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Applies to <strong>{formatMonthLabel(month)}</strong>. Updating overwrites any existing budget for this category.</p>
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Amount</Label>
-                  <Input inputMode="decimal" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)} />
-                </div>
-                <div className="text-xs text-muted-foreground">Applies to {formatMonthLabel(month)}.</div>
-              </div>
-              <DialogFooter>
-                <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-                <Button onClick={submit} disabled={upsert.isPending}>Save</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
+                <DialogFooter className="mt-2">
+                  <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+                  <Button onClick={submit} disabled={upsert.isPending}>Save budget</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        }
+      />
 
       {isLoading ? (
         <div className="text-sm text-muted-foreground">Loading…</div>
       ) : !budgets || budgets.length === 0 ? (
-        <Card className="border-card-border">
+        <div className="rounded-2xl border border-border bg-card">
           <EmptyState
             icon={PiggyBank}
             title="No budgets for this month"
-            description="Set a budget per category to see how you're tracking."
+            description="Set a spending limit per category to track how you're doing."
             action={<Button onClick={() => setOpen(true)}><Plus className="size-4" /> Set budget</Button>}
           />
-        </Card>
+        </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {budgets.map((b) => {
@@ -157,32 +153,58 @@ export default function Budgets() {
             const spent = spentFor(b.category);
             const pct = b.amount > 0 ? Math.min(100, Math.round((spent / b.amount) * 100)) : 0;
             const over = spent > b.amount;
+            const warn = !over && pct >= 80;
             return (
-              <Card key={b.id} className="p-5 border-card-border">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`size-10 rounded-lg flex items-center justify-center ${meta.bg} ${meta.color}`}>
+              <div key={b.id} className="rounded-2xl border border-border bg-card p-5">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className={cn("size-10 rounded-xl flex items-center justify-center", meta.bg, meta.color)}>
                     <Icon className="size-4" />
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium">{b.category}</div>
+                    <div className="font-semibold">{b.category}</div>
                     <div className="text-xs text-muted-foreground">{formatMonthLabel(b.month)}</div>
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(b.id)} aria-label="Delete">
-                    <Trash2 className="size-4" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-8 rounded-lg text-muted-foreground hover:text-destructive"
+                    onClick={() => handleDelete(b.id)}
+                  >
+                    <Trash2 className="size-3.5" />
                   </Button>
                 </div>
+
                 <div className="space-y-2">
-                  <Progress value={pct} className={over ? "[&>div]:bg-destructive" : ""} />
-                  <div className="flex justify-between text-sm">
-                    <span className={over ? "text-destructive font-medium" : "text-muted-foreground"}>
-                      {formatMoney(spent, currency)} spent
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-muted-foreground">Spent</span>
+                    <span className={cn("font-semibold", over && "text-destructive", warn && "text-warning")}>
+                      {formatMoney(spent, currency)} <span className="font-normal text-muted-foreground">/ {formatMoney(b.amount, currency)}</span>
                     </span>
-                    <span className="font-medium">{formatMoney(b.amount, currency)}</span>
                   </div>
-                  {over && <div className="text-xs text-destructive">You're over budget by {formatMoney(spent - b.amount, currency)}.</div>}
-                  {!over && pct >= 80 && <div className="text-xs text-amber-600 dark:text-amber-400">{pct}% used — close to your limit.</div>}
+                  <Progress
+                    value={pct}
+                    className={cn(
+                      "h-2 rounded-full",
+                      over && "[&>div]:bg-destructive",
+                      warn && "[&>div]:bg-warning",
+                    )}
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{pct}% used</span>
+                    <span>{formatMoney(Math.max(0, b.amount - spent), currency)} remaining</span>
+                  </div>
+                  {over && (
+                    <div className="text-xs text-destructive font-medium pt-1">
+                      Over budget by {formatMoney(spent - b.amount, currency)}
+                    </div>
+                  )}
+                  {warn && (
+                    <div className="text-xs text-warning font-medium pt-1">
+                      Approaching your limit — {100 - pct}% remaining
+                    </div>
+                  )}
                 </div>
-              </Card>
+              </div>
             );
           })}
         </div>

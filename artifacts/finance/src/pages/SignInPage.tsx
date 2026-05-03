@@ -1,44 +1,105 @@
 import { SignIn } from "@clerk/react";
-import { Wallet } from "lucide-react";
+import { TrendingUp, ShieldCheck, Zap, BarChart3, ArrowUpRight } from "lucide-react";
+
+const FEATURES = [
+  { icon: Zap,         text: "AI auto-categorization for every transaction" },
+  { icon: ShieldCheck, text: "Budget alerts before you overspend" },
+  { icon: BarChart3,   text: "Spending predictions powered by GPT" },
+  { icon: ArrowUpRight,text: "Monthly & weekly PDF reports" },
+];
+
+const STATS = [
+  { label: "Avg savings tracked", value: "$4,200" },
+  { label: "Budget accuracy",     value: "94%" },
+  { label: "AI categorizations",  value: "99%" },
+];
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-background via-background to-primary/5 p-4">
-      <div className="w-full max-w-5xl grid md:grid-cols-2 gap-8 items-center">
-        <div className="hidden md:block space-y-6">
+    <div className="min-h-screen w-full flex bg-background">
+
+      {/* ── Left brand panel ──────────────────────── */}
+      <div className="hidden lg:flex lg:w-[480px] xl:w-[560px] shrink-0 sidebar-gradient flex-col justify-between p-10 relative overflow-hidden">
+
+        {/* Decorative circles */}
+        <div className="absolute top-[-100px] right-[-80px] size-[350px] rounded-full bg-primary/15 blur-3xl pointer-events-none" />
+        <div className="absolute bottom-[-80px] left-[-60px] size-[280px] rounded-full bg-primary/10 blur-2xl pointer-events-none" />
+
+        {/* Content */}
+        <div className="relative z-10 space-y-10">
+
+          {/* Logo */}
           <div className="flex items-center gap-3">
-            <div className="size-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center">
-              <Wallet className="size-6" />
+            <div className="size-11 rounded-2xl bg-primary flex items-center justify-center shadow-2xl shadow-primary/40">
+              <TrendingUp className="size-5 text-primary-foreground" />
             </div>
             <div>
-              <div className="text-2xl font-semibold tracking-tight">Finova</div>
-              <div className="text-sm text-muted-foreground">AI Personal Finance</div>
+              <div className="text-xl font-bold text-white">Finova</div>
+              <div className="text-[10px] uppercase tracking-[0.15em] text-sidebar-muted">AI Personal Finance</div>
             </div>
           </div>
-          <h1 className="text-4xl font-semibold tracking-tight leading-tight">
-            Take control of your money.
-            <span className="block text-primary">With a little help from AI.</span>
-          </h1>
-          <p className="text-muted-foreground max-w-md">
-            Track expenses, set budgets, hit savings goals, and get personalized insights — all in one beautiful dashboard.
-          </p>
-          <ul className="space-y-2 text-sm">
-            {[
-              "Smart auto-categorization for every transaction",
-              "Budget alerts so you never overspend",
-              "AI predictions for next month's spending",
-              "Monthly & weekly reports as PDF",
-            ].map((f) => (
-              <li key={f} className="flex items-start gap-2">
-                <span className="size-1.5 rounded-full bg-primary mt-2" />
-                <span>{f}</span>
-              </li>
+
+          {/* Headline */}
+          <div>
+            <h1 className="text-4xl xl:text-[2.75rem] font-bold text-white leading-[1.1]">
+              Smart money<br />
+              <span style={{
+                background: "linear-gradient(135deg, hsl(158 72% 60%), hsl(198 85% 64%))",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+              }}>
+                starts here.
+              </span>
+            </h1>
+            <p className="mt-4 text-white/60 text-base leading-relaxed max-w-xs">
+              AI-powered insights, smart budgets, and beautiful reports — your finances, finally under control.
+            </p>
+          </div>
+
+          {/* Features */}
+          <div className="space-y-3">
+            {FEATURES.map(({ icon: Icon, text }) => (
+              <div key={text} className="flex items-center gap-3">
+                <div className="size-8 rounded-xl bg-primary/20 border border-primary/20 flex items-center justify-center shrink-0">
+                  <Icon className="size-3.5 text-primary" />
+                </div>
+                <span className="text-sm text-white/75">{text}</span>
+              </div>
             ))}
-          </ul>
+          </div>
+
+          {/* Stats row */}
+          <div className="grid grid-cols-3 gap-3">
+            {STATS.map(({ label, value }) => (
+              <div key={label} className="rounded-xl bg-white/5 border border-white/8 p-3">
+                <div className="text-lg font-bold text-white">{value}</div>
+                <div className="text-[10px] text-sidebar-muted mt-0.5 leading-tight">{label}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex justify-center">
-          <SignIn routing="hash" signUpUrl="#/sign-up" />
+
+        <div className="relative z-10 text-[11px] text-sidebar-muted/50">
+          © {new Date().getFullYear()} Finova · Built for clarity
         </div>
+      </div>
+
+      {/* ── Right sign-in panel ───────────────────── */}
+      <div className="flex-1 flex flex-col items-center justify-center p-6">
+
+        {/* Mobile logo */}
+        <div className="lg:hidden flex items-center gap-3 mb-8">
+          <div className="size-10 rounded-2xl bg-primary flex items-center justify-center text-primary-foreground">
+            <TrendingUp className="size-5" />
+          </div>
+          <div>
+            <div className="text-lg font-bold">Finova</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-widest">AI Personal Finance</div>
+          </div>
+        </div>
+
+        <SignIn routing="hash" signUpUrl="#/sign-up" />
       </div>
     </div>
   );

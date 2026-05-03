@@ -2,7 +2,7 @@ import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useAuth, ClerkLoaded, ClerkLoading } from "@clerk/react";
 import { useEffect, useMemo } from "react";
-import { setBaseUrl, setAuthTokenGetter } from "@workspace/api-client-react";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AppLayout } from "@/components/AppLayout";
@@ -23,7 +23,7 @@ const queryClient = new QueryClient({
   },
 });
 
-setBaseUrl("/api");
+// Base URL is already /api from the OpenAPI spec server config — do not set again
 
 function ApiAuthBridge() {
   const { getToken, isSignedIn } = useAuth();

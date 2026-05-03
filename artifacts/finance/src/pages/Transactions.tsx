@@ -10,7 +10,6 @@ import {
   useGetProfile,
   type Transaction,
 } from "@workspace/api-client-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,9 +24,11 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { PageHeader } from "@/components/PageHeader";
+import { EmptyState } from "@/components/EmptyState";
 import { formatMoney, formatDate, parseMoneyToCents } from "@/lib/format";
 import { categoryMeta, EXPENSE_CATEGORIES } from "@/lib/categories";
-import { EmptyState } from "@/components/EmptyState";
+import { cn } from "@/lib/utils";
 
 const INCOME_CATEGORIES = ["Salary", "Freelance", "Investments", "Gift", "Others"];
 
@@ -46,6 +47,14 @@ const emptyForm: FormState = {
   description: "",
   date: new Date().toISOString().slice(0, 10),
 };
+
+function Card({ className, children }: { className?: string; children: React.ReactNode }) {
+  return (
+    <div className={cn("rounded-2xl border border-border bg-card overflow-hidden", className)}>
+      {children}
+    </div>
+  );
+}
 
 export default function Transactions() {
   const qc = useQueryClient();
@@ -97,15 +106,15 @@ export default function Transactions() {
 
   async function autoCategorize() {
     if (!form.description.trim()) {
-      toast({ title: "Add a description first", description: "We need a description to auto-categorize." });
+      toast({ title: "Add a description first" });
       return;
     }
     try {
       const res = await categorize.mutateAsync({ data: { description: form.description } });
       setForm((f) => ({ ...f, category: res.category }));
-      toast({ title: "Categorized", description: `Suggested: ${res.category}` });
+      toast({ title: `Categorized as "${res.category}"` });
     } catch {
-      toast({ title: "Couldn't auto-categorize", variant: "destructive" });
+      toast({ title: "Auto-categorize failed", variant: "destructive" });
     }
   }
 
@@ -153,140 +162,165 @@ export default function Transactions() {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-end justify-between flex-wrap gap-4">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Transactions</h1>
-          <p className="text-sm text-muted-foreground mt-1">Track every dollar in and out.</p>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreate}><Plus className="size-4" /> Add transaction</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{editing ? "Edit transaction" : "New transaction"}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Tabs value={form.type} onValueChange={(v) => setForm((f) => ({ ...f, type: v as "income" | "expense", category: v === "income" ? "Salary" : "Food" }))}>
-                <TabsList className="grid grid-cols-2">
-                  <TabsTrigger value="expense">Expense</TabsTrigger>
-                  <TabsTrigger value="income">Income</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              <div className="grid grid-cols-2 gap-3">
+    <div>
+      <PageHeader
+        title="Transactions"
+        subtitle="Track every dollar in and out."
+        action={
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openCreate} className="shadow-md shadow-primary/20">
+                <Plus className="size-4" /> Add transaction
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>{editing ? "Edit transaction" : "New transaction"}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-1">
+                <Tabs
+                  value={form.type}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, type: v as "income" | "expense", category: v === "income" ? "Salary" : "Food" }))
+                  }
+                >
+                  <TabsList className="grid grid-cols-2 w-full">
+                    <TabsTrigger value="expense">Expense</TabsTrigger>
+                    <TabsTrigger value="income">Income</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label>Amount</Label>
+                    <Input
+                      inputMode="decimal"
+                      placeholder="0.00"
+                      value={form.amount}
+                      onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Date</Label>
+                    <Input
+                      type="date"
+                      value={form.date}
+                      onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+                    />
+                  </div>
+                </div>
                 <div className="space-y-1.5">
-                  <Label>Amount</Label>
+                  <Label>Description</Label>
                   <Input
-                    inputMode="decimal"
-                    placeholder="0.00"
-                    value={form.amount}
-                    onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
+                    placeholder="e.g. Lunch at café"
+                    value={form.description}
+                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Date</Label>
-                  <Input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))} />
+                  <div className="flex items-center justify-between">
+                    <Label>Category</Label>
+                    {form.type === "expense" && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 text-xs gap-1 text-primary"
+                        onClick={autoCategorize}
+                        disabled={categorize.isPending}
+                      >
+                        <Sparkles className="size-3" /> Auto-detect
+                      </Button>
+                    )}
+                  </div>
+                  <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {categoryOptions.map((c) => (
+                        <SelectItem key={c} value={c}>{c}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              <div className="space-y-1.5">
-                <Label>Description</Label>
-                <Input
-                  placeholder="e.g. Lunch with team"
-                  value={form.description}
-                  onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label>Category</Label>
-                  {form.type === "expense" && (
-                    <Button type="button" variant="ghost" size="sm" onClick={autoCategorize} disabled={categorize.isPending}>
-                      <Sparkles className="size-3.5" /> Auto-categorize
-                    </Button>
-                  )}
-                </div>
-                <Select value={form.category} onValueChange={(v) => setForm((f) => ({ ...f, category: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {categoryOptions.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-              <Button onClick={submit} disabled={create.isPending || update.isPending}>
-                {editing ? "Save" : "Add"}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+              <DialogFooter className="mt-2">
+                <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button onClick={submit} disabled={create.isPending || update.isPending}>
+                  {editing ? "Save changes" : "Add transaction"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+      />
 
-      <Card className="p-4 border-card-border">
-        <div className="flex flex-wrap gap-2 items-center">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <Input className="pl-9" placeholder="Search descriptions…" value={search} onChange={(e) => setSearch(e.target.value)} />
-          </div>
-          <Select value={filterType} onValueChange={setFilterType}>
-            <SelectTrigger className="w-[140px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All types</SelectItem>
-              <SelectItem value="expense">Expense</SelectItem>
-              <SelectItem value="income">Income</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select value={filterCategory} onValueChange={setFilterCategory}>
-            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All categories</SelectItem>
-              {[...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES].filter((v, i, a) => a.indexOf(v) === i).map((c) => (
+      {/* Filters */}
+      <div className="flex flex-wrap gap-2 mb-4">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="size-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <Input
+            className="pl-9 rounded-xl bg-card"
+            placeholder="Search descriptions…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="w-[140px] rounded-xl bg-card"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All types</SelectItem>
+            <SelectItem value="expense">Expense</SelectItem>
+            <SelectItem value="income">Income</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterCategory} onValueChange={setFilterCategory}>
+          <SelectTrigger className="w-[160px] rounded-xl bg-card"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All categories</SelectItem>
+            {[...EXPENSE_CATEGORIES, ...INCOME_CATEGORIES]
+              .filter((v, i, a) => a.indexOf(v) === i)
+              .map((c) => (
                 <SelectItem key={c} value={c}>{c}</SelectItem>
               ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </Card>
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Card className="border-card-border overflow-hidden">
+      {/* List */}
+      <Card>
         {isLoading ? (
-          <div className="p-8 text-sm text-muted-foreground">Loading…</div>
+          <div className="p-12 flex items-center justify-center text-sm text-muted-foreground">Loading…</div>
         ) : !transactions || transactions.length === 0 ? (
           <EmptyState
             icon={Inbox}
-            title="No transactions yet"
-            description="Add your first transaction to start tracking."
+            title="No transactions found"
+            description="Add your first transaction or adjust your filters."
             action={<Button onClick={openCreate}><Plus className="size-4" /> Add transaction</Button>}
           />
         ) : (
-          <div className="divide-y divide-border">
+          <div className="divide-y divide-border/60">
             {transactions.map((t) => {
               const meta = categoryMeta(t.category);
               const Icon = meta.icon;
               const positive = t.type === "income";
               return (
-                <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40">
-                  <div className={`size-10 rounded-lg flex items-center justify-center ${meta.bg} ${meta.color}`}>
+                <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors group">
+                  <div className={`size-9 rounded-xl flex items-center justify-center shrink-0 ${meta.bg} ${meta.color}`}>
                     <Icon className="size-4" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{t.description || t.category}</div>
                     <div className="text-xs text-muted-foreground">{t.category} · {formatDate(t.date)}</div>
                   </div>
-                  <div className={`text-sm font-semibold flex items-center gap-1 ${positive ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                  <div className={cn("text-sm font-semibold flex items-center gap-0.5 shrink-0", positive ? "text-success" : "text-destructive")}>
                     {positive ? <ArrowUpRight className="size-3.5" /> : <ArrowDownRight className="size-3.5" />}
                     {formatMoney(t.amount, currency)}
                   </div>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(t)} aria-label="Edit">
-                      <Pencil className="size-4" />
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="size-8 rounded-lg" onClick={() => openEdit(t)}>
+                      <Pencil className="size-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => handleDelete(t.id)} aria-label="Delete">
-                      <Trash2 className="size-4" />
+                    <Button variant="ghost" size="icon" className="size-8 rounded-lg text-destructive hover:text-destructive" onClick={() => handleDelete(t.id)}>
+                      <Trash2 className="size-3.5" />
                     </Button>
                   </div>
                 </div>
