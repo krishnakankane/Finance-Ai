@@ -8,11 +8,6 @@ const FEATURES = [
   { icon: ArrowUpRight,text: "Monthly & weekly PDF reports" },
 ];
 
-const STATS = [
-  { label: "Avg savings tracked", value: "$4,200" },
-  { label: "Budget accuracy",     value: "94%" },
-  { label: "AI categorizations",  value: "99%" },
-];
 
 export default function SignInPage() {
   return (
@@ -69,15 +64,6 @@ export default function SignInPage() {
             ))}
           </div>
 
-          {/* Stats row */}
-          <div className="grid grid-cols-3 gap-3">
-            {STATS.map(({ label, value }) => (
-              <div key={label} className="rounded-xl bg-white/5 border border-white/8 p-3">
-                <div className="text-lg font-bold text-white">{value}</div>
-                <div className="text-[10px] text-sidebar-muted mt-0.5 leading-tight">{label}</div>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="relative z-10 text-[11px] text-sidebar-muted/50">
